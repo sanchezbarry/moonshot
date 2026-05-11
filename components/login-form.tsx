@@ -1,20 +1,25 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+'use client'
+
+import { useActionState } from 'react'
+import { login, type AuthState } from '@/app/actions/auth'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
+const initialState: AuthState = { error: null }
+
+export function LoginForm({ className }: { className?: string }) {
+  const [state, action, isPending] = useActionState(login, initialState)
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form className={cn('flex flex-col gap-6', className)} action={action}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
@@ -22,10 +27,16 @@ export function LoginForm({
             Enter your email below to login to your account
           </p>
         </div>
+
+        {state.error && (
+          <p className="text-sm text-red-500 text-center">{state.error}</p>
+        )}
+
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="m@example.com"
             required
@@ -44,13 +55,16 @@ export function LoginForm({
           </div>
           <Input
             id="password"
+            name="password"
             type="password"
             required
             className="bg-background"
           />
         </Field>
         <Field>
-          <Button type="submit">Login</Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Logging in…' : 'Login'}
+          </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
@@ -64,8 +78,8 @@ export function LoginForm({
             Login with GitHub
           </Button>
           <FieldDescription className="text-center">
-            Don&apos;t have an account?{" "}
-            <a href="#" className="underline underline-offset-4">
+            Don&apos;t have an account?{' '}
+            <a href="/signup" className="underline underline-offset-4">
               Sign up
             </a>
           </FieldDescription>

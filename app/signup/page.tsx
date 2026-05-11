@@ -1,5 +1,3 @@
-"use client"
-
 import { SignupForm } from "@/components/signup-form"
 import { GalleryVerticalEndIcon } from "lucide-react"
 

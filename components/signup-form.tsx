@@ -1,20 +1,25 @@
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+'use client'
+
+import { useActionState } from 'react'
+import { signup, type AuthState } from '@/app/actions/auth'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 
-export function SignupForm({
-  className,
-  ...props
-}: React.ComponentProps<"form">) {
+const initialState: AuthState = { error: null }
+
+export function SignupForm({ className }: { className?: string }) {
+  const [state, action, isPending] = useActionState(signup, initialState)
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form className={cn('flex flex-col gap-6', className)} action={action}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Create your account</h1>
@@ -22,10 +27,17 @@ export function SignupForm({
             Fill in the form below to create your account
           </p>
         </div>
+
+        {state.error && (
+          <p className="text-sm text-red-500 text-center">{state.error}</p>
+        )}
+
         <Field>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
+          {/* name="name" is required for FormData to capture this field */}
           <Input
             id="name"
+            name="name"
             type="text"
             placeholder="John Doe"
             required
@@ -36,6 +48,7 @@ export function SignupForm({
           <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
+            name="email"
             type="email"
             placeholder="m@example.com"
             required
@@ -50,18 +63,18 @@ export function SignupForm({
           <FieldLabel htmlFor="password">Password</FieldLabel>
           <Input
             id="password"
+            name="password"
             type="password"
             required
             className="bg-background"
           />
-          <FieldDescription>
-            Must be at least 8 characters long.
-          </FieldDescription>
+          <FieldDescription>Must be at least 8 characters long.</FieldDescription>
         </Field>
         <Field>
-          <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+          <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
           <Input
-            id="confirm-password"
+            id="confirmPassword"
+            name="confirmPassword"
             type="password"
             required
             className="bg-background"
@@ -69,7 +82,9 @@ export function SignupForm({
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
         <Field>
-          <Button type="submit">Create Account</Button>
+          <Button type="submit" disabled={isPending}>
+            {isPending ? 'Creating account…' : 'Create Account'}
+          </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>

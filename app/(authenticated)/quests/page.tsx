@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Carousel, Card } from "@/components/ui/apple-cards-carousel";
+import { DailyCheckIn } from "@/components/DailyCheckIn";
 
 
 export default function QuestCarousel() {
@@ -18,6 +19,7 @@ export default function QuestCarousel() {
     </div>
   );
 }
+
 
 const DummyContent = () => {
   return (
@@ -53,19 +55,19 @@ const DummyContent = () => {
 
 const data = [
   {
-    category: "Artificial Intelligence",
-    title: "You can do more with AI.",
+    category: "Daily Check In (100 pts)",
+    title: "Rocket to the moon! Check in daily to earn points.",
     src: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?q=80&w=3556&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    content: <DummyContent />,
+    content: <DailyCheckIn />,
   },
   {
-    category: "Productivity",
-    title: "Enhance your productivity.",
+    category: "Social Login (500 pts)",
+    title: "Connect your Twitch account.",
     src: "https://images.unsplash.com/photo-1531554694128-c4c6665f59c2?q=80&w=3387&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     content: <DummyContent />,
   },
   {
-    category: "Product",
+    category: "Call of Duty Special Event (1000 pts)",
     title: "Launching the new Apple Vision Pro.",
     src: "https://images.unsplash.com/photo-1713869791518-a770879e60dc?q=80&w=2333&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     content: <DummyContent />,

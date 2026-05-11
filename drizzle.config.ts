@@ -11,9 +11,7 @@ export default {
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {
-    // Use the Supabase direct connection string (not the pooler) for migrations,
-    // since PgBouncer (the pooler) doesn't support DDL statements.
-    // Format: postgresql://postgres:[password]@db.[project-ref].supabase.co:5432/postgres
-    url: process.env.DATABASE_URL!,
+    // DIRECT_URL bypasses the pooler — required for drizzle-kit DDL introspection
+    url: process.env.DIRECT_URL!,
   },
 } satisfies Config

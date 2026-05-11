@@ -30,14 +30,20 @@ export async function signup(
 
   // Create the profile row immediately after auth user is created.
   // The profile id matches auth.users.id — this is the permanent link between the two.
+  // onConflictDoNothing guards against retries (e.g. if email confirmation is re-sent).
   if (data.user) {
-    await db.insert(profiles).values({
-      id: data.user.id,
-      displayName: name,
-    })
+    await db.insert(profiles)
+      .values({ id: data.user.id, displayName: name })
+      .onConflictDoNothing()
   }
 
   redirect('/quests')
+}
+
+export async function logout(): Promise<never> {
+  const supabase = await createClient()
+  await supabase.auth.signOut()
+  redirect('/login')
 }
 
 export async function login(
@@ -48,9 +54,20 @@ export async function login(
   const password = formData.get('password') as string
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
   if (error) return { error: error.message }
 
-  redirect('/quests')
+  // Upsert profile in case it was never created (e.g. signup failed mid-way).
+  // Falls back to the email prefix as display name if we have no better value.
+  if (data.user) {
+    await db.insert(profiles)
+      .values({
+        id: data.user.id,
+        displayName: data.user.email?.split('@')[0] ?? 'User',
+      })
+      .onConflictDoNothing()
+  }
+
+  redirect('/dashboard')
 }

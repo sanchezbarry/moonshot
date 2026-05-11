@@ -2,8 +2,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { TextFlippingBoard } from "./ui/text-flipping-board";
 import { Button } from "./ui/button";
-import Link
- from "next/link";
+import Link from "next/link";
+
+
+
 const MESSAGES: string[] = [
   "PLAY GAMES.\nCOMPLETE QUESTS.\nGET REWARDED.",
   "READY?",
@@ -27,6 +29,11 @@ export function Hero() {
 
   return (
     <div className="flex w-full flex-col items-center justify-center gap-8 py-20">
+              <div className="flex justify-center gap-2 md:justify-start">
+                <a href="#" className="flex items-center gap-2 font-medium">
+                  moonshot
+                </a>
+              </div>
       <TextFlippingBoard text={MESSAGES[msgIdx]} />
       <div className="gap-4">
     

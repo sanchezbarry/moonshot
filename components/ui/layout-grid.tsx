@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { JSX, useState } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 

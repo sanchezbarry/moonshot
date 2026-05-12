@@ -30,11 +30,14 @@ export function Hero() {
   return (
     <div className="flex w-full flex-col items-center justify-center gap-8 py-20">
               <div className="flex justify-center gap-2 md:justify-start">
-                <a href="#" className="flex items-center gap-2 font-medium">
+                <a href="#" className="flex items-center gap-2 font-medium text-2xl">
                   moonshot
                 </a>
               </div>
       <TextFlippingBoard text={MESSAGES[msgIdx]} />
+      <div >
+        Play games. Earn points. Get rewarded.
+      </div>
       <div className="gap-4 flex">
     
       <Button asChild>

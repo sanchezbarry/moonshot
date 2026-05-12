@@ -25,6 +25,7 @@ export function QuestCarousel({ dailyQuest, streakInfo }: QuestCarouselProps) {
       category: `Daily Quest · ${dailyQuest.pointsReward} pts`,
       title: dailyQuest.title,
       src: 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=2672&auto=format&fit=crop',
+      completed: streakInfo.checkedInToday,
       content: (
         <DailyCheckIn
           title={dailyQuest.title}

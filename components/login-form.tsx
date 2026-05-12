@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { login, type AuthState } from '@/app/actions/auth'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -61,9 +62,9 @@ export function LoginForm({ className }: { className?: string }) {
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a href="#" className="ml-auto text-sm underline-offset-4 hover:underline">
+            <Link href="/forgot-password" className="ml-auto text-sm underline-offset-4 hover:underline">
               Forgot your password?
-            </a>
+            </Link>
           </div>
           <Input
             id="password"

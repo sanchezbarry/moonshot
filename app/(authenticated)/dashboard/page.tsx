@@ -56,9 +56,17 @@ export default async function DashboardPage() {
       </div>
 
       {/* Badges */}
-      {earnedBadges.length > 0 && (
-        <div className="rounded-2xl border bg-card p-6 space-y-4">
-          <h2 className="font-semibold text-lg">Badges</h2>
+      <div className="rounded-2xl border bg-card p-6 space-y-4">
+        <h2 className="font-semibold text-lg">Badges</h2>
+        {earnedBadges.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No badges earned yet. Head to{' '}
+            <a href="/rewards" className="underline underline-offset-4 hover:text-foreground">
+              Rewards
+            </a>{' '}
+            to claim your first one.
+          </p>
+        ) : (
           <div className="flex flex-wrap gap-3">
             {earnedBadges.map((badge) => (
               <div
@@ -71,8 +79,8 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Quick links */}
       <div className="rounded-2xl border bg-card p-6 space-y-4">

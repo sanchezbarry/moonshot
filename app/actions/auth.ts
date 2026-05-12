@@ -1,11 +1,12 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { db } from '@/lib/db'
 import { profiles } from '@/lib/db/schema'
 
-export type AuthState = { error: string | null }
+export type AuthState = { error: string | null; message?: string }
 
 export async function signup(
   prevState: AuthState,
@@ -43,7 +44,43 @@ export async function signup(
       .onConflictDoNothing()
   }
 
-  redirect('/quests')
+  redirect('/dashboard')
+}
+
+export async function forgotPassword(
+  prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const email = formData.get('email') as string
+  const headersList = await headers()
+  const origin = headersList.get('origin') ?? 'http://localhost:3000'
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=/reset-password`,
+  })
+
+  if (error) return { error: error.message }
+
+  return { error: null, message: 'Check your email for a password reset link.' }
+}
+
+export async function resetPassword(
+  prevState: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const password = formData.get('password') as string
+  const confirmPassword = formData.get('confirmPassword') as string
+
+  if (password !== confirmPassword) return { error: 'Passwords do not match.' }
+  if (password.length < 8) return { error: 'Password must be at least 8 characters.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({ password })
+
+  if (error) return { error: error.message }
+
+  redirect('/dashboard')
 }
 
 export async function logout(): Promise<never> {

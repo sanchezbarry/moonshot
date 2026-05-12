@@ -35,7 +35,7 @@ export function Hero() {
                 </a>
               </div>
       <TextFlippingBoard text={MESSAGES[msgIdx]} />
-      <div className="gap-4">
+      <div className="gap-4 flex">
     
       <Button asChild>
         <Link href="/#signup">Get Started</Link>

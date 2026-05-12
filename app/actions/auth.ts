@@ -24,7 +24,13 @@ export async function signup(
   }
 
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({ email, password })
+  // Store display_name in Supabase user_metadata so the login fallback can
+  // retrieve it even if the profile insert below hasn't run yet
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { display_name: name } },
+  })
 
   if (error) return { error: error.message }
 
@@ -59,13 +65,16 @@ export async function login(
   if (error) return { error: error.message }
 
   // Upsert profile in case it was never created (e.g. signup failed mid-way).
-  // Falls back to the email prefix as display name if we have no better value.
+  // Prefer the display_name stored in Supabase user_metadata (set during signUp)
+  // over the email prefix so the real name is used even on first login.
   if (data.user) {
+    const displayName =
+      (data.user.user_metadata?.display_name as string | undefined) ??
+      data.user.email?.split('@')[0] ??
+      'User'
+
     await db.insert(profiles)
-      .values({
-        id: data.user.id,
-        displayName: data.user.email?.split('@')[0] ?? 'User',
-      })
+      .values({ id: data.user.id, displayName })
       .onConflictDoNothing()
   }
 

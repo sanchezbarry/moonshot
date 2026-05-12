@@ -8,7 +8,6 @@ import {
   timestamp,
 } from 'drizzle-orm/pg-core'
 
-// Discriminates quest types so we can handle daily check-in logic separately
 export const questTypeEnum = pgEnum('quest_type', [
   'daily_checkin',
   'social',
@@ -16,8 +15,10 @@ export const questTypeEnum = pgEnum('quest_type', [
   'special',
 ])
 
-// Mirrors auth.users — id is the Supabase auth user UUID, not auto-generated
-// pointsBalance is the source of truth for a user's spendable points
+// badge = collectible, one-time per user, shown on dashboard
+// loot  = point-modifying, redeemable multiple times
+export const rewardTypeEnum = pgEnum('reward_type', ['badge', 'loot'])
+
 export const profiles = pgTable('profiles', {
   id: uuid('id').primaryKey(),
   displayName: text('display_name'),
@@ -26,7 +27,6 @@ export const profiles = pgTable('profiles', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// Quest definitions — actual completion tracking lives in quest_completions
 export const quests = pgTable('quests', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
@@ -37,8 +37,6 @@ export const quests = pgTable('quests', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// One row per completion event — for daily_checkin quests, completedAt.date()
-// is used to enforce the one-per-day constraint in the application layer
 export const questCompletions = pgTable('quest_completions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -50,12 +48,12 @@ export const questCompletions = pgTable('quest_completions', {
   completedAt: timestamp('completed_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// Reward catalogue — pointsCost is deducted from profiles.pointsBalance on redemption
 export const rewards = pgTable('rewards', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
   description: text('description').notNull(),
   pointsCost: integer('points_cost').notNull(),
+  type: rewardTypeEnum('type').default('loot').notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 })
@@ -72,9 +70,8 @@ export const rewardRedemptions = pgTable('reward_redemptions', {
   redeemedAt: timestamp('redeemed_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// Inferred TypeScript types for use in application code
 export type Profile = typeof profiles.$inferSelect
 export type Quest = typeof quests.$inferSelect
-export type QuestCompletion = typeof questCompletions.$inferSelect
 export type Reward = typeof rewards.$inferSelect
+export type QuestCompletion = typeof questCompletions.$inferSelect
 export type RewardRedemption = typeof rewardRedemptions.$inferSelect

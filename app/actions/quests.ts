@@ -24,8 +24,7 @@ function utcDateKey(date: Date): string {
   return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`
 }
 
-// Counts consecutive calendar days (UTC) ending on today (if checkedInToday) or yesterday.
-// Walks the sorted-descending date list and breaks on the first gap.
+// Counts consecutive calendar days (UTC) ending on today (if checkedInToday) or yesterday. walks the sorted-descending date list and breaks on the first gap.
 async function calculateStreak(userId: string, questId: string): Promise<StreakInfo> {
   const completions = await db
     .select({ completedAt: questCompletions.completedAt })
@@ -38,7 +37,7 @@ async function calculateStreak(userId: string, questId: string): Promise<StreakI
   const now = new Date()
   const todayKey = utcDateKey(now)
 
-  // Deduplicate to one entry per calendar day
+  // deduplicate to one entry per calendar day
   const uniqueDateKeys = [...new Set(completions.map((c) => utcDateKey(new Date(c.completedAt))))]
 
   const checkedInToday = uniqueDateKeys[0] === todayKey

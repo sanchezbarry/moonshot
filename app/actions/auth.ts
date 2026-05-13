@@ -26,7 +26,6 @@ export async function signup(
 
   const supabase = await createClient()
   // Store display_name in Supabase user_metadata so the login fallback can
-  // retrieve it even if the profile insert below hasn't run yet
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -36,8 +35,6 @@ export async function signup(
   if (error) return { error: error.message }
 
   // Create the profile row immediately after auth user is created.
-  // The profile id matches auth.users.id — this is the permanent link between the two.
-  // onConflictDoNothing guards against retries (e.g. if email confirmation is re-sent).
   if (data.user) {
     await db.insert(profiles)
       .values({ id: data.user.id, displayName: name })
@@ -84,8 +81,6 @@ export async function resetPassword(
 }
 
 // Called client-side after signInWithWeb3() succeeds.
-// Wallet sign-in is entirely browser-side, so profile creation must be a
-// separate server action call rather than happening inside the auth flow.
 export async function ensureProfile(): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -120,9 +115,7 @@ export async function login(
 
   if (error) return { error: error.message }
 
-  // Upsert profile in case it was never created (e.g. signup failed mid-way).
-  // Prefer the display_name stored in Supabase user_metadata (set during signUp)
-  // over the email prefix so the real name is used even on first login.
+  // Insert profile in case it was never created (e.g. signup failed mid-way).
   if (data.user) {
     const displayName =
       (data.user.user_metadata?.display_name as string | undefined) ??

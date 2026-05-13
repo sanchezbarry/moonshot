@@ -1,6 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+
+declare global {
+  interface Window {
+    ethereum?: Record<string, unknown>
+  }
+}
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { ensureProfile } from '@/app/actions/auth'

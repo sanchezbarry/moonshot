@@ -4,21 +4,6 @@ A full-stack gamified rewards platform where users complete quests to earn point
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 + shadcn/ui |
-| Auth | Supabase Auth (@supabase/ssr) |
-| Database | Supabase (PostgreSQL) |
-| ORM | Drizzle ORM |
-| Animations | Motion (Framer Motion) |
-| Deployment | Vercel |
-
----
-
 ## Setup
 
 ### 1. Install dependencies
@@ -48,8 +33,6 @@ DATABASE_URL=postgresql://postgres.<project-ref>:<password>@aws-X-<region>.poole
 DIRECT_URL=postgresql://postgres.<project-ref>:<password>@aws-X-<region>.pooler.supabase.com:5432/postgres
 ```
 
-> **Why two URLs?** The Transaction pooler (6543) doesn't support the DDL introspection queries drizzle-kit needs. The Session pooler (5432) does. At runtime, the app uses the Transaction pooler with `prepare: false`.
-
 ### 3. Push the database schema
 
 ```bash
@@ -62,80 +45,7 @@ npm run db:push
 npm run dev
 ```
 
----
 
-## Database Schema
-
-### Entity Relationship Overview
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  auth.users  (Supabase managed — not directly writable)         │
-│  ─────────────────────────────────────────────────────          │
-│  id          UUID  PK                                           │
-│  email       text                                               │
-│  password    (encrypted, managed by Supabase Auth)              │
-└──────────────────────────┬──────────────────────────────────────┘
-                           │ 1
-                           │ id shared as PK — the permanent join
-                           │ point between auth and your database
-                           ▼ 1
-┌──────────────────────────────────────────────────────────────────┐
-│  profiles                                                        │
-│  ────────────────────────────────────────────────────────        │
-│  id               UUID  PK  (= auth.users.id)                   │
-│  display_name     text                                           │
-│  points_balance   int   ◄── single source of truth for balance  │
-│  created_at       timestamptz                                    │
-│  updated_at       timestamptz  refreshed on every mutation       │
-└───────────┬──────────────────────────────┬───────────────────────┘
-            │ 1                            │ 1
-            │                             │
-            ▼ N                           ▼ N
-┌───────────────────────┐     ┌───────────────────────────────────┐
-│  quest_completions    │     │  reward_redemptions               │
-│  (immutable ledger)   │     │  (immutable ledger)               │
-│  ─────────────────    │     │  ─────────────────────────────    │
-│  id           UUID PK │     │  id           UUID  PK            │
-│  user_id      UUID FK─┼──┐  │  user_id      UUID  FK ──────────┼──┐
-│  quest_id     UUID FK─┼──┼─▶│  reward_id    UUID  FK ──────────┼──┼─▶
-│  completed_at tstamptz│  │  │  redeemed_at  timestamptz        │  │
-└───────────────────────┘  │  └───────────────────────────────────┘  │
-            │ N            │                                          │
-            ▼ 1            │  (FK back to profiles)                  │
-┌───────────────────────┐  │                                          │
-│  quests               │  └──────────────────────────────────────────┘
-│  ─────────────────    │                 (FK back to profiles)        │
-│  id           UUID PK │                                              │
-│  title        text    │                                              ▼ 1
-│  description  text    │                              ┌───────────────────────────┐
-│  points_reward int    │                              │  rewards                  │
-│  type         enum ───┼──► quest_type:               │  ─────────────────────    │
-│  is_active    bool    │    daily_checkin             │  id           UUID  PK    │
-│  created_at   tstamptz│    social                    │  title        text        │
-└───────────────────────┘    onboarding                │  description  text        │
-                             special                   │  points_cost  int         │
-                                                       │  type         enum ───────┼──► reward_type:
-                                                       │  is_active    bool        │    badge
-                                                       │  created_at   timestamptz │    loot
-                                                       └───────────────────────────┘
-```
-
-#### Key relationships
-
-| Relationship | Cardinality | Notes |
-|---|---|---|
-| `auth.users` → `profiles` | 1 : 1 | Same UUID used as PK in both. Created together at signup |
-| `profiles` → `quest_completions` | 1 : N | One row per completion event; streak is derived from this table |
-| `quest_completions` → `quests` | N : 1 | Many completions can reference the same quest definition |
-| `profiles` → `reward_redemptions` | 1 : N | One row per redemption; badge ownership is derived from this table |
-| `reward_redemptions` → `rewards` | N : 1 | Many redemptions can reference the same reward definition |
-
-#### Design decisions
-
-- **No stored streak column.** The current streak is always calculated on demand by walking `quest_completions` backwards from today. The ledger is the source of truth — a stored counter would risk going out of sync.
-- **No stored badge column on profiles.** Whether a user owns a badge is derived by joining `reward_redemptions` with `rewards WHERE type = 'badge'`. Same principle: the ledger over a denormalised flag.
-- **Atomic transactions everywhere.** Every point change (check-in, redemption) writes a ledger entry and updates `profiles.points_balance` inside a single transaction. There is no path to phantom points or an orphaned record.
 
 ---
 
@@ -216,26 +126,6 @@ Immutable ledger of every reward redemption. One row per redemption event.
 
 ## How the Application Works
 
-### Authentication Flow
-
-```
-User fills signup form
-    │
-    ▼
-supabase.auth.signUp()          — Supabase creates a row in auth.users
-    │
-    ▼
-db.insert(profiles)             — App creates a matching row in profiles
-    │                             using the same UUID as auth.users.id
-    ▼
-redirect → /quests
-```
-
-Login follows the same pattern in reverse: `signInWithPassword()` → profile upsert (safety net in case signup failed mid-way) → redirect.
-
-The `proxy.ts` file (Next.js 16's replacement for middleware) intercepts every request. Unauthenticated users hitting protected routes (`/dashboard`, `/quests`, `/rewards`) are redirected to `/login`. Authenticated users hitting `/login` or `/signup` are redirected to `/dashboard`.
-
----
 
 ### Points Flow
 
@@ -267,22 +157,7 @@ The `sql\`points_balance + ${delta}\`` pattern avoids the read-modify-write race
 
 ---
 
-### Daily Check-in Quest
 
-#### Streak logic
-
-The check-in operates on a **7-day streak cycle**. Every completed day advances the streak by 1. On every 7th consecutive day, a **+300 pt bonus** is awarded on top of the regular 100 pts. Missing a day resets the streak to 0.
-
-```
-streak 1 → 100 pts
-streak 2 → 100 pts
-streak 3 → 100 pts
-streak 4 → 100 pts
-streak 5 → 100 pts
-streak 6 → 100 pts
-streak 7 → 400 pts  (100 base + 300 bonus)
-streak 8 → 100 pts  (new cycle begins)
-```
 
 #### Check-in flow
 
@@ -315,32 +190,6 @@ db.transaction:
 Return { newStreak, bonusAwarded, newBalance } → client updates streak dots + shows dialog
 ```
 
-#### UI
-
-The card popup shows:
-- Current streak counter (`🔥 N day streak`)
-- A 7-segment progress bar — each segment represents one day in the cycle
-- The 7th segment is highlighted in amber with a `+300` label beneath it
-- A hint line on day 6: *"Check in tomorrow for your 7-day bonus: +300 pts!"*
-- The success dialog distinguishes between a normal check-in and a 7-day bonus completion
-
----
-
-### Rewards
-
-**Pioneer Badge** (`type: badge`)
-- Costs 100 pts
-- One-time per user — checked by querying `reward_redemptions` before allowing redemption
-- On redemption: 100 pts deducted, row inserted into `reward_redemptions`
-- Appears on dashboard under "Badges" by joining `reward_redemptions` with `rewards` where `type = 'badge'`
-
-**Double or Half** (`type: loot`)
-- Costs 100 pts
-- Repeatable
-- On redemption: 100 pts deducted, then remaining balance is either doubled (50%) or halved (50%) using a server-side coin flip
-- The random multiplier is applied inside the transaction so the ledger entry and the final balance are always consistent
-
----
 
 ## Database Scripts
 

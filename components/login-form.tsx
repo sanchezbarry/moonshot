@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { IconBrandGoogle } from '@tabler/icons-react'
 import type { Provider } from '@supabase/supabase-js'
+import { WalletLoginButton } from '@/components/WalletLoginButton'
 
 const initialState: AuthState = { error: null }
 
@@ -82,7 +83,7 @@ export function LoginForm({ className }: { className?: string }) {
 
         <FieldSeparator>Or continue with</FieldSeparator>
 
-        <Field>
+        <Field className="flex flex-col gap-2">
           <Button
             variant="outline"
             type="button"
@@ -92,6 +93,7 @@ export function LoginForm({ className }: { className?: string }) {
             <IconBrandGoogle className="size-4" />
             {oauthLoading === 'google' ? 'Redirecting…' : 'Continue with Google'}
           </Button>
+          <WalletLoginButton />
         </Field>
 
         <FieldDescription className="text-center">

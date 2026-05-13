@@ -83,6 +83,25 @@ export async function resetPassword(
   redirect('/dashboard')
 }
 
+// Called client-side after signInWithWeb3() succeeds.
+// Wallet sign-in is entirely browser-side, so profile creation must be a
+// separate server action call rather than happening inside the auth flow.
+export async function ensureProfile(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  // Supabase stores the wallet address in user_metadata.address
+  const address = user.user_metadata?.address as string | undefined
+  const displayName = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : user.email?.split('@')[0] ?? 'Explorer'
+
+  await db.insert(profiles)
+    .values({ id: user.id, displayName })
+    .onConflictDoNothing()
+}
+
 export async function logout(): Promise<never> {
   const supabase = await createClient()
   await supabase.auth.signOut()
